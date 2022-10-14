@@ -1,5 +1,9 @@
 name: graphview
+imports:
+  - https://get.silverbullet.md/global.plug.json
 version: 0.1
+assets:
+  - "asset/*"
 functions:
   helloWorld:
     path: "./graphview.ts:toggleGraphView"
