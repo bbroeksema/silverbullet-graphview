@@ -49,7 +49,6 @@ async function script(graph: any) {
     const chart = ForceGraph(graph, {
       nodeId: d => d.id,
       nodeTitle: d => d.id,
-      nodeRadius: 10,
       nodeStrokeOpacity: 0.75,
       height: 600,
       width: 700,
