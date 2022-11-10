@@ -13,7 +13,6 @@ function ForceGraph({
   nodeStroke = "#fff", // node stroke color
   nodeStrokeWidth = 1.5, // node stroke width, in pixels
   nodeStrokeOpacity = 1, // node stroke opacity
-  nodeRadius = 5, // node radius, in pixels
   nodeStrength,
   linkSource = ({source}) => source, // given d in links, returns a node identifier string
   linkTarget = ({target}) => target, // given d in links, returns a node identifier string
@@ -29,6 +28,7 @@ function ForceGraph({
 } = {}) {
   // Compute values.
   const N = d3.map(nodes, nodeId).map(intern);
+  const C = d3.map(nodes, nodeConnectivity.bind(null, links));
   const LS = d3.map(links, linkSource).map(intern);
   const LT = d3.map(links, linkTarget).map(intern);
   if (nodeTitle === undefined) nodeTitle = (_, i) => N[i];
@@ -37,8 +37,19 @@ function ForceGraph({
   const W = typeof linkStrokeWidth !== "function" ? null : d3.map(links, linkStrokeWidth);
 
   // Replace the input nodes and links with mutable objects for the simulation.
-  nodes = d3.map(nodes, (_, i) => ({id: N[i]}));
+  nodes = d3.map(nodes, (_, i) => ({id: N[i], connectivity: C[i]}));
   links = d3.map(links, (_, i) => ({source: LS[i], target: LT[i]}));
+
+  // Compute node connectivity
+  function isConnecting(node, link) {
+    return link.source == node.id || link.target == node.id;
+  }
+  
+  function nodeConnectivity(links, node) {
+    return links.reduce((acc, currentLink) => {
+      return acc + (isConnecting(node, currentLink) ? 1 : 0);
+    }, 0);
+  }
 
   // Compute default domains.
   if (G && nodeGroups === undefined) nodeGroups = d3.sort(G);
@@ -69,6 +80,11 @@ function ForceGraph({
 
   if (W) link.attr("stroke-width", ({index: i}) => W[i]);
 
+  // Scales for node size based on connectivity
+  const nodeSizeScale = d3.scaleLinear()
+    .domain([d3.min(C), d3.max(C)])
+    .range([2, 8]);
+
   const node = svg.append("g")
     .attr("fill", nodeFill)
     .attr("stroke", nodeStroke)
@@ -77,7 +93,7 @@ function ForceGraph({
     .selectAll("circle")
     .data(nodes)
     .join("circle")
-    .attr("r", nodeRadius);
+    .attr("r", d => nodeSizeScale(d.connectivity));
 
   if (G) node.attr("fill", ({index: i}) => color(G[i]));
   if (T) node.append("title").text(({index: i}) => T[i]);
@@ -112,7 +128,9 @@ function ForceGraph({
   function resizeNode(d, k) {
     // TODO: Make sure d has some information on the connectedness of a
     // node so that we can vary node sizes based on that.
-    return Math.max(5, 5 * Math.log(k));
+    const min = nodeSizeScale(d.connectivity);
+    const cur = nodeSizeScale(d.connectivity) * Math.log(k);
+    return Math.max(min, cur);
   }
 
   function zoomed(event) {
