@@ -21,7 +21,7 @@ supported by scroll and pinch gestures with the mouse(pad).
 ## For offline development
 
 To ease development of the visual part, the offline folder contains a copy of
-the html and custom javascritpt. As well as a simple graph model.
+the html and custom javascript. As well as a simple graph model.
 
 ```bash
 $ cd offline
