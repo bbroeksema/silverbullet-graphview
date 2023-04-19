@@ -27,13 +27,14 @@ async function renderGraph(page: any) {
   // https://github.com/d3/d3-force
   const graph = await buildGraph(page);
   const graph_json = JSON.stringify(graph);
+  const css = await asset.readAsset("style.css");
   if (await stateProvider.getGraphViewStatus()) {
     await editor.showPanel(
       "lhs",
       1, // panel flex property
       `<html>
         <head>
-          <style>body{overflow:hidden}</style>
+          <style>${css}</style>
         </head>
         <body>
           <div id="graph" >

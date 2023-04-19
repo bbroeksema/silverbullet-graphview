@@ -4,6 +4,7 @@ imports:
 version: 0.1
 assets:
   - "asset/*"
+  - style.css
 functions:
 
   toggle:

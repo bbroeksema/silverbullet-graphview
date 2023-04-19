@@ -1,0 +1,9 @@
+text.svgtext:hover {
+  fill: #17115e;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+body {
+  overflow: hidden;
+}

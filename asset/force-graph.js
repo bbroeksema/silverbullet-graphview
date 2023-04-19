@@ -114,12 +114,8 @@ function ForceGraph({
     .attr('font-size', '0.8em')
     .attr('fill', '#222')
     .attr('text-anchor', 'middle')
+    .attr('class', 'svgtext')
     .on('click', function (event, d) {
-      // protocol = window.top.location.protocol;
-      // baseurl = window.top.location.host;
-      // target_url = `${protocol}//${baseurl}/${d.id}`
-      // window.top.location = target_url;
-      //TODO: Figure out how to do this without a full page reload
       sendEvent('graphview:navigateTo', d.id);
     });
 
