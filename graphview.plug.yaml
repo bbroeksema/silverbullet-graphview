@@ -19,3 +19,8 @@ functions:
     events:
       - plug:load
       - editor:pageLoaded
+
+  navigateTo:
+    path: "./graphview.ts:navigateTo"
+    events:
+      - graphview:navigateTo

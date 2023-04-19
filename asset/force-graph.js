@@ -1,12 +1,12 @@
-  //
-  // Settings added by Willem Hendriks
-  // (!) to be added to yaml or other settings config
-  //
-  //
-  // LABEL SETTINGS
-  const LABEL_MARGIN = 22; // margin between label-text and node, higher number -> more space
-  const LABEL_VISIBILITY_START_K = 1.5; // at this k, labels are still invisible
-  const LABEL_VISIBILITY_END_K = 5; // at this k, labels are fully visible
+//
+// Settings added by Willem Hendriks
+// (!) to be added to yaml or other settings config
+//
+//
+// LABEL SETTINGS
+const LABEL_MARGIN = 22; // margin between label-text and node, higher number -> more space
+const LABEL_VISIBILITY_START_K = 1.5; // at this k, labels are still invisible
+const LABEL_VISIBILITY_END_K = 5; // at this k, labels are fully visible
 
 // Copyright 2021 Observable, Inc.
 // Released under the ISC license.
@@ -24,8 +24,8 @@ function ForceGraph({
   nodeStrokeWidth = 1.5, // node stroke width, in pixels
   nodeStrokeOpacity = 1, // node stroke opacity
   nodeStrength,
-  linkSource = ({source}) => source, // given d in links, returns a node identifier string
-  linkTarget = ({target}) => target, // given d in links, returns a node identifier string
+  linkSource = ({ source }) => source, // given d in links, returns a node identifier string
+  linkTarget = ({ target }) => target, // given d in links, returns a node identifier string
   linkStroke = "#999", // link stroke color
   linkStrokeOpacity = 0.6, // link stroke opacity
   linkStrokeWidth = 1.5, // given d in links, returns a stroke width in pixels
@@ -48,14 +48,14 @@ function ForceGraph({
   const W = typeof linkStrokeWidth !== "function" ? null : d3.map(links, linkStrokeWidth);
 
   // Replace the input nodes and links with mutable objects for the simulation.
-  nodes = d3.map(nodes, (_, i) => ({id: N[i], connectivity: C[i]}));
-  links = d3.map(links, (_, i) => ({source: LS[i], target: LT[i]}));
+  nodes = d3.map(nodes, (_, i) => ({ id: N[i], connectivity: C[i] }));
+  links = d3.map(links, (_, i) => ({ source: LS[i], target: LT[i] }));
 
   // Compute node connectivity
   function isConnecting(node, link) {
     return link.source == node.id || link.target == node.id;
   }
-  
+
   function nodeConnectivity(links, node) {
     return links.reduce((acc, currentLink) => {
       return acc + (isConnecting(node, currentLink) ? 1 : 0);
@@ -70,7 +70,7 @@ function ForceGraph({
 
   // Construct the forces.
   const forceNode = d3.forceManyBody();
-  const forceLink = d3.forceLink(links).id(({index: i}) => N[i]);
+  const forceLink = d3.forceLink(links).id(({ index: i }) => N[i]);
   if (nodeStrength !== undefined) forceNode.strength(nodeStrength);
   if (linkStrength !== undefined) forceLink.strength(linkStrength);
 
@@ -89,7 +89,7 @@ function ForceGraph({
     .data(links)
     .join("line");
 
-  if (W) link.attr("stroke-width", ({index: i}) => W[i]);
+  if (W) link.attr("stroke-width", ({ index: i }) => W[i]);
 
   // Scales for node size based on connectivity
   const nodeSizeScale = d3.scaleLinear()
@@ -110,13 +110,21 @@ function ForceGraph({
     .data(nodes)
     .join('text')
     .text(d => d.id)
-    .attr('font-family', 'Sans,Arial' )
-    .attr('font-size', '0.8em' )
-    .attr('fill', '#222' )
-    .attr('text-anchor', 'middle');
+    .attr('font-family', 'Sans,Arial')
+    .attr('font-size', '0.8em')
+    .attr('fill', '#222')
+    .attr('text-anchor', 'middle')
+    .on('click', function (event, d) {
+      // protocol = window.top.location.protocol;
+      // baseurl = window.top.location.host;
+      // target_url = `${protocol}//${baseurl}/${d.id}`
+      // window.top.location = target_url;
+      //TODO: Figure out how to do this without a full page reload
+      sendEvent('graphview:navigateTo', d.id);
+    });
 
-  if (G) node.attr("fill", ({index: i}) => color(G[i]));
-  if (T) node.append("title").text(({index: i}) => T[i]);
+  if (G) node.attr("fill", ({ index: i }) => color(G[i]));
+  if (T) node.append("title").text(({ index: i }) => T[i]);
 
   // Handle invalidation.
   if (invalidation != null) invalidation.then(() => simulation.stop());
@@ -126,11 +134,17 @@ function ForceGraph({
   }
 
   const simulation = d3.forceSimulation(nodes)
-      .force("link", forceLink)
-      .force("charge", forceNode)
-      .force("x", d3.forceX())
-      .force("y", d3.forceY())
-      .on("tick", ticked);
+    .force("link", forceLink)
+    .force("charge", forceNode)
+    .force("x", d3.forceX())
+    .force("y", d3.forceY())
+    .on("tick", ticked)
+    .stop(); // Don't start the simulation automatically.
+
+  // Note: This manual drawing of the simulation is necessary to fix broken zooming in the first seconds
+  // of the page load while the simulation is running.
+  simulation.tick(300); // Run the simulation for 300 ticks, but without drawing.
+  ticked(); // Draw once after the simulation has stabilized.
 
   function ticked() {
     link
@@ -147,7 +161,7 @@ function ForceGraph({
       .attr('x', d => d.x)
       .attr('y', d => d.y);
   }
- 
+
   // Zoom
   function resizeNode(d, k) {
     // TODO: Make sure d has some information on the connectedness of a
@@ -173,24 +187,25 @@ function ForceGraph({
       .attr('transform', translate);
     labels
       .attr('transform', translate)
-      .attr('x', d => d.x * t.k )
-      .attr('y', d => d.y * t.k + LABEL_MARGIN )
-      .attr('opacity', opacity_activation(event.transform.k) );;
+      .attr('x', d => d.x * t.k)
+      .attr('y', d => d.y * t.k + LABEL_MARGIN)
+      .attr('opacity', opacity_activation(event.transform.k));
+
   }
 
   const zoom = d3.zoom()
-    .scaleExtent([1/2, 64])
+    .scaleExtent([1 / 2, 64])
     .on("zoom", zoomed);
-  
+
   svg.call(zoom)
     .call(zoom.translateTo, 0, 0);
 
 
-  return Object.assign(svg.node(), {scales: {color}});
+  return Object.assign(svg.node(), { scales: { color } });
 }
 
 
-function opacity_activation(zoom_level){
+function opacity_activation(zoom_level) {
   /* Summary: returns opacity value, depending on zoom level k
    *
    * opacity is a value betwen [0,1] where 0 is invisible
@@ -204,10 +219,10 @@ function opacity_activation(zoom_level){
    *
    */
 
-  if (zoom_level <=  LABEL_VISIBILITY_START_K) {
+  if (zoom_level <= LABEL_VISIBILITY_START_K) {
     return 0;
   }
-  if (zoom_level >=  LABEL_VISIBILITY_END_K) {
+  if (zoom_level >= LABEL_VISIBILITY_END_K) {
     return 1;
   }
 
