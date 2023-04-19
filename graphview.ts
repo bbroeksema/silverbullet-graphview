@@ -30,9 +30,10 @@ async function renderGraph(page: any) {
   if (await stateProvider.getGraphViewStatus()) {
     await editor.showPanel(
       "lhs",
-      1,
+      1, // panel flex property
       `<html>
         <head>
+          <style>body{overflow:hidden}</style>
         </head>
         <body>
           <div id="graph" >
@@ -81,15 +82,21 @@ async function script(graph: any) {
     }
     
     createChart();
-    
-    // Add an event listener to the window object that listens for the resize event
-    window.addEventListener('resize', () => {
+
+    function handleResize() {
       // Check if the dimensions have actually changed
-      if (window.innerHeight !== chart.height || window.innerWidth !== chart.width) {
+      if (window.innerHeight-10 !== chart.height || window.innerWidth-10 !== chart.width) {
         // Recreate/redraw the chart object
         createChart();
       }
-    });    
+    }
+        
+    let timeout = false;
+    // Add an event listener to the window object that listens for the resize event
+    window.addEventListener('resize', () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(handleResize, 250);
+    });
   `;
 }
 
