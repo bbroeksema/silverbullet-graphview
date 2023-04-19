@@ -13,7 +13,7 @@ functions:
       key: ctrl-shift-g
       mac: Cmd-shift-g
 
-  updateBacklinks:
+  updateGraphView:
     path: "./graphview.ts:updateGraphView"
     env: client
     events:
