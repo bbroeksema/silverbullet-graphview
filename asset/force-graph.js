@@ -96,6 +96,11 @@ function ForceGraph({
     .domain([d3.min(C), d3.max(C)])
     .range([2, 8]);
 
+  // scales for label size based on connectivity
+  const labelSizeScale = d3.scaleLinear()
+    .domain([d3.min(C), d3.max(C)])
+    .range([0.6, 1.2]);
+
   const node = svg.append("g")
     .attr("stroke", nodeStroke)
     .attr("stroke-opacity", nodeStrokeOpacity)
@@ -111,7 +116,7 @@ function ForceGraph({
     .join('text')
     .text(d => d.id)
     .attr('font-family', 'Sans,Arial')
-    .attr('font-size', '0.8em')
+    .attr('font-size', d => `${labelSizeScale(d.connectivity)}em`)
     .attr('fill', '#222')
     .attr('text-anchor', 'middle')
     .attr('class', 'svgtext')
