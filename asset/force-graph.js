@@ -7,7 +7,7 @@
 const LABEL_MARGIN = 22; // margin between label-text and node, higher number -> more space
 const LABEL_VISIBILITY_START_K = 1.5; // at this k, labels are still invisible
 const LABEL_VISIBILITY_END_K = 5; // at this k, labels are fully visible
-const LABEL_TRUNCATION_LENGTH = 25; // max length of word in label
+const LABEL_TRUNCATION_LENGTH = 20; // max length of word in label
 
 // Copyright 2021 Observable, Inc.
 // Released under the ISC license.
