@@ -41,6 +41,7 @@ function ForceGraph({
 
   const N = d3.map(nodes, nodeId).map(intern);
   const C = d3.map(nodes, nodeConnectivity.bind(null, links));
+  const COL = d3.map(nodes, d => d.color).map(intern);
   const LS = d3.map(links, linkSource).map(intern);
   const LT = d3.map(links, linkTarget).map(intern);
   if (nodeTitle === undefined) nodeTitle = (_, i) => N[i];
@@ -49,7 +50,7 @@ function ForceGraph({
   const W = typeof linkStrokeWidth !== "function" ? null : d3.map(links, linkStrokeWidth);
 
   // Replace the input nodes and links with mutable objects for the simulation.
-  nodes = d3.map(nodes, (_, i) => ({ id: N[i], connectivity: C[i] }));
+  nodes = d3.map(nodes, (_, i) => ({ id: N[i], connectivity: C[i], color: COL[i] }));
   links = d3.map(links, (_, i) => ({ source: LS[i], target: LT[i] }));
 
   // Compute node connectivity
@@ -103,13 +104,14 @@ function ForceGraph({
     .range([0.6, 1.2]);
 
   const node = svg.append("g")
-    .attr("stroke", nodeStroke)
     .attr("stroke-opacity", nodeStrokeOpacity)
     .attr("stroke-width", nodeStrokeWidth)
     .selectAll("circle")
     .data(nodes)
     .join("circle")
-    .attr("r", d => nodeSizeScale(d.connectivity));
+    .attr("r", d => nodeSizeScale(d.connectivity))
+    .attr("stroke", d => `#${d.color}`)
+    .attr("fill", d => `#${d.color}`);
 
   const labels = svg.append("g")
     .selectAll("text")

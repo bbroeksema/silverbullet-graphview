@@ -123,8 +123,15 @@ async function buildGraph(name: string): Promise<SpaceGraph> {
     return { "source": page, "target": to };
   });
 
+  const colors = await index.queryPrefix("tag:node_color=");
+
   const nodes = nodeNames.map((name) => {
-    return { "id": name };
+    // Check if page in colors
+    let color = "#000000";
+    if (colors.find((c) => c.page === name)) {
+      color = colors.find((c) => c.page === name).key.split("=")[1];
+    }
+    return { "id": name, "color": color };
   });
 
   return { "nodes": nodes, "links": links };
