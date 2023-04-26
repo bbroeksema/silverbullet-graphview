@@ -143,25 +143,43 @@ async function buildColorMap(): Promise<ColorMap[]> {
 
 // Build a SpaceGraph object from the current space
 async function buildGraph(name: string): Promise<SpaceGraph> {
+  // Get pages tagged with .graphignore
+  const ignorePages: string[] = (await index.queryPrefix("tag:.graphignore"))
+    .map((tag) => tag.page);
+
+  // Get all pages in space
   const pages = await space.listPages();
-  const nodeNames = pages.map(({ name }) => {
-    return name;
-  });
+  const nodeNames = pages
+    .filter((page) => !ignorePages.includes(page.name))
+    .map(({ name }) => {
+      return name;
+    });
+
+  // Filter function to remove links to and from pages tagged with .graphignore
+  const filterIgnoredLinks = (link) => {
+    const topage = link.key.split(':')
+      .slice(1, -1)
+      .join(':')
+    return !ignorePages.includes(link.page)
+      && !ignorePages.includes(topage)
+  }
 
   // NOTE: This may result to the same link showing multiple times
   //       if the same page has multiple references to another page.
   const pageLinks = await index.queryPrefix(`pl:`);
-  const links = pageLinks.map(({ key, page }) => {
-    const to = key.split(':')
-      .slice(1, -1)
-      .join(':'); // Key: pl:page:pos
+  const links = pageLinks
+    .filter(filterIgnoredLinks)
+    .map(({ key, page }) => {
+      const to = key.split(':')
+        .slice(1, -1)
+        .join(':'); // Key: pl:page:pos
 
-    if (!nodeNames.includes(to)) {
-      // Add nodes for non-existing pages which are linked to
-      nodeNames.push(to);
-    }
-    return { "source": page, "target": to };
-  });
+      if (!nodeNames.includes(to)) {
+        // Add nodes for non-existing pages which are linked to
+        nodeNames.push(to);
+      }
+      return { "source": page, "target": to };
+    });
 
   const colors: ColorMap[] = await buildColorMap()
 
