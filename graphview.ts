@@ -1,7 +1,8 @@
 import { editor, space, index } from "$sb/silverbullet-syscall/mod.ts";
 import { asset } from "$sb/plugos-syscall/mod.ts";
+import { readSetting } from "$sb/lib/settings_page.ts";
 import { StateProvider } from "stateProvider";
-import { SpaceGraph } from "model";
+import { SpaceGraph, Tag, ColorMap } from "model";
 
 const stateProvider = new StateProvider("showGraphView");
 
@@ -101,6 +102,44 @@ async function script(graph: any) {
   `;
 }
 
+async function readColorMapSettings() {
+  const graphviewSettings = await readSetting("graphview", {});
+  if (graphviewSettings.colormap) {
+    return graphviewSettings.colormap;
+  }
+  return false;
+}
+
+// Build a ColorMap object from tags and settings
+async function buildColorMap(): Promise<ColorMap[]> {
+  const colorMapSettings = await readColorMapSettings();
+  const tags: Tag[] = await index.queryPrefix("tag:");
+  const taggedPages: string[] = [...new Set(tags.map((tag) => tag.page))];
+  const individuallyTaggedPages = await index.queryPrefix("tag:node_color=");
+
+  const colors: ColorMap[] = taggedPages.map((page) => {
+    // if individually defined color
+    let color = "000000";
+    if (individuallyTaggedPages.find((t) => t.page === page)) {
+      color = individuallyTaggedPages.find((t) => t.page === page).value.split("=")[1];
+    } else if (colorMapSettings) {
+      // if page is tagged with a tag from colorMapSettings →  map color code to page name
+      // get all tags of page
+      const pageTags = tags.filter((tag) => tag.page === page);
+      // check, if any of the tags is in colorMapSettings
+      const pageTagsInColorMapSettings = pageTags.filter((tag) =>
+        colorMapSettings[tag.value] !== undefined,
+      );
+      // if yes, use color from colorMapSettings
+      if (pageTagsInColorMapSettings.length > 0) {
+        color = colorMapSettings[pageTagsInColorMapSettings[0].value];
+      }
+    }
+    return { "page": page, "color": color };
+  });
+  return colors;
+}
+
 // Build a SpaceGraph object from the current space
 async function buildGraph(name: string): Promise<SpaceGraph> {
   const pages = await space.listPages();
@@ -123,13 +162,13 @@ async function buildGraph(name: string): Promise<SpaceGraph> {
     return { "source": page, "target": to };
   });
 
-  const colors = await index.queryPrefix("tag:node_color=");
+  const colors = await buildColorMap()
 
   const nodes = nodeNames.map((name) => {
-    // Check if page in colors
+    // if page in colors → map color code to page name
     let color = "#000000";
     if (colors.find((c) => c.page === name)) {
-      color = colors.find((c) => c.page === name).key.split("=")[1];
+      color = colors.find((c) => c.page === name).color;
     }
     return { "id": name, "color": color };
   });
@@ -148,4 +187,3 @@ export async function navigateTo(pageRef: string) {
   console.log(`navigating to ${pageRef}`);
   await editor.navigate(page, +pos); // todo: do we have the position for it?
 }
-

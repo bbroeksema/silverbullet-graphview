@@ -7,3 +7,14 @@ export type SpaceGraph = {
     target: string;
   }[];
 }
+
+export type Tag = {
+  key: string,
+  page: string,
+  value: string
+}
+
+export type ColorMap = {
+  page: string,
+  color: string
+}
