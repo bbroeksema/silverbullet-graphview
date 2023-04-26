@@ -18,7 +18,7 @@ Then run the `Plugs: Update` command and off you go!
 Run the `Show Global Graph` command to open up the graph view. Zoom and pan is
 supported by scroll and pinch gestures with the mouse(pad).
 
-### Tags
+### Tags & Paths
 Set tags on the pages to customize their appearance in the graph
 - `#node_color=ff0000` → Change node color to red
 - `#.graphignore` → Hide the page from the graph
@@ -30,11 +30,13 @@ Create a colormap with HEX-colorcodes in `SETTINGS.md`. In this example, a node 
 graphview:
   default_color: "000000"
   colormap:
-    projects: "ffc533"
-    howto: "96020e"
-    notes: "02bdb6"
-    garden: "0bbd02"
-    services: "01017a"
+    path:
+      ⚙ services: "01017a"
+      📓 notes: "02bdb6"
+      🚧 projects: "ffc533"
+      🧰 how-to: "96020e"
+    tag:
+      garden: "0bbd02"
 ```
 ## Links
 Click on the node labels to directly navigate to pages in your space
