@@ -1,12 +1,14 @@
 import { editor, space, index } from "$sb/silverbullet-syscall/mod.ts";
 import { asset } from "$sb/plugos-syscall/mod.ts";
 import { StateProvider } from "stateprovider";
-import { ColorMap } from "colormap";
+import { ColorMap, ColorMapBuilder } from "colormap";
 import { SpaceGraph } from "model";
-import { readGraphviewSettings, navigateTo } from "utils";
+import { readGraphviewSettings } from "utils";
 import { GraphIgnore } from "graphignore";
 
 const stateProvider = new StateProvider("showGraphView");
+const colorMapBuilder = new ColorMapBuilder();
+
 
 // Toggle Graph View and sync state
 export async function toggleGraphView() {
@@ -136,8 +138,8 @@ async function buildGraph(name: string): Promise<SpaceGraph> {
       return { "source": page, "target": to };
     });
 
-  const colors: ColorMap[] = await ColorMap.buildColorMap()
-
+  await colorMapBuilder.init();
+  const colors: ColorMap[] = colorMapBuilder.build()
   const default_color = await readGraphviewSettings("default_color");
 
   const nodes = nodeNames.map((name) => {

@@ -1,6 +1,7 @@
 import { Tag } from "model";
-import { index } from "$sb/silverbullet-syscall/mod.ts";
+import { index, space } from "$sb/silverbullet-syscall/mod.ts";
 import { readGraphviewSettings } from "utils";
+import { PageMeta } from "../silverbullet/common/types";
 
 export class ColorMap {
   page: string;
@@ -10,35 +11,72 @@ export class ColorMap {
     this.page = page;
     this.color = color;
   }
+}
 
-  // Build a ColorMap object from tags and settings
-  static async buildColorMap(): Promise<ColorMap[]> {
-    const colorMapSettings = await readGraphviewSettings("colormap");
-    const tags: Tag[] = await index.queryPrefix("tag:");
-    const taggedPages: string[] = [...new Set(tags.map((tag) => tag.page))];
-    const individuallyTaggedPages = await index.queryPrefix("tag:node_color=");
-    const default_color = await readGraphviewSettings("default_color");
+export class ColorMapBuilder {
+  colorMapSettings: any;
+  colorMapPathSettings: any;
+  colorMapTagSettings: any;
+  spacetags: Tag[];
+  spacepages: PageMeta[]
+  taggedPages: string[];
+  individuallyTaggedPages: any;
+  default_color: any;
 
-    const colors: ColorMap[] = taggedPages.map((page) => {
-      // if individually defined color
-      let color = default_color ? default_color : "000000";
-      if (individuallyTaggedPages.find((t) => t.page === page)) {
-        color = individuallyTaggedPages.find((t) => t.page === page).value.split("=")[1];
-      } else if (colorMapSettings["tag"]) {
-        // if page is tagged with a tag from colorMapSettings →  map color code to page name
-        // get all tags of page
-        const pageTags = tags.filter((tag) => tag.page === page);
+  async init(): Promise<void> {
+    // Read settings
+    this.colorMapSettings = await readGraphviewSettings("colormap");
+    console.log(this.colorMapSettings);
+    this.colorMapPathSettings = this.colorMapSettings ? this.colorMapSettings["path"] : [];
+    this.colorMapTagSettings = this.colorMapSettings ? this.colorMapSettings["tag"] : [];
+
+    // Get all tags
+    this.spacetags = await index.queryPrefix("tag:");
+    this.taggedPages = [...new Set(this.spacetags.map((tag) => tag.page))];
+    this.individuallyTaggedPages = await index.queryPrefix("tag:node_color=");
+
+    // Get all pages
+    this.spacepages = await space.listPages();
+
+    // Get default color
+    this.default_color = await readGraphviewSettings("default_color");
+  }
+
+  build(): ColorMap[] {
+    // Iterate over all pages
+    return this.spacepages.map((page) => {
+      // Get all tags of page
+      const pageTags = this.spacetags.filter((tag) => tag.page === page.name);
+
+      // If page has tag with "tag:node_color=" → use color from tag and continue
+      if (this.individuallyTaggedPages.find((t) => t.page === page.name)) {
+        return { "page": page.name, "color": this.individuallyTaggedPages.find((t) => t.page === page.name).value.split("=")[1] };
+      }
+
+      // If page has a tag from colorMapSettings ["tag"] →  map color code to page name and continue
+      if (this.colorMapTagSettings) {
         // check, if any of the tags is in colorMapSettings
         const pageTagsInColorMapSettings = pageTags.filter((tag) =>
-          colorMapSettings["tag"][tag.value] !== undefined,
+          this.colorMapTagSettings[tag.value] !== undefined,
         );
         // if yes, use color from colorMapSettings
         if (pageTagsInColorMapSettings.length > 0) {
-          color = colorMapSettings["tag"][pageTagsInColorMapSettings[0].value];
+          return { "page": page.name, "color": this.colorMapTagSettings[pageTagsInColorMapSettings[0].value] };
         }
       }
-      return { "page": page, "color": color };
+
+      // If page name begins with element colorMapSettings ["path"] → map color code to page name and continue
+      if (this.colorMapPathSettings) {
+        // console.log(Object.keys(this.colorMapPathSettings))
+        const pageNameBeginsWithPath = Object.keys(this.colorMapPathSettings)
+          .find((path: string) => page.name.startsWith(path));
+        if (pageNameBeginsWithPath) {
+          return { "page": page.name, "color": this.colorMapPathSettings[pageNameBeginsWithPath] };
+        }
+      }
+
+      // Use default color
+      return { "page": page.name, "color": this.default_color ? this.default_color : "000000" };
     });
-    return colors;
   }
 }
