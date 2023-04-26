@@ -96,7 +96,7 @@ function ForceGraph({
   // Scales for node size based on connectivity
   const nodeSizeScale = d3.scaleLinear()
     .domain([d3.min(C), d3.max(C)])
-    .range([2, 8]);
+    .range([3, 12]);
 
   // scales for label size based on connectivity
   const labelSizeScale = d3.scaleLinear()
