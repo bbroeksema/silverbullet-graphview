@@ -204,7 +204,7 @@ function ForceGraph({
     labels
       .attr('transform', translate)
       .attr('x', d => d.x * t.k)
-      .attr('y', d => d.y * t.k + LABEL_MARGIN)
+      .attr('y', d => d.y * t.k + LABEL_MARGIN + resizeNode(d, t.k))
       .attr('opacity', opacity_activation(event.transform.k));
 
   }
