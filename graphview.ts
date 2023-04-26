@@ -1,8 +1,10 @@
 import { editor, space, index } from "$sb/silverbullet-syscall/mod.ts";
 import { asset } from "$sb/plugos-syscall/mod.ts";
-import { readSetting } from "$sb/lib/settings_page.ts";
-import { StateProvider } from "stateProvider";
-import { SpaceGraph, Tag, ColorMap } from "model";
+import { StateProvider } from "stateprovider";
+import { ColorMap } from "colormap";
+import { SpaceGraph } from "model";
+import { readGraphviewSettings, navigateTo } from "utils";
+import { GraphIgnore } from "graphignore";
 
 const stateProvider = new StateProvider("showGraphView");
 
@@ -102,73 +104,26 @@ async function script(graph: any) {
   `;
 }
 
-async function readGraphviewSettings(key: string) {
-  const graphviewSettings = await readSetting("graphview", {});
-  if (graphviewSettings[key] !== undefined) {
-    return graphviewSettings[key];
-  }
-  return false;
-}
 
-// Build a ColorMap object from tags and settings
-async function buildColorMap(): Promise<ColorMap[]> {
-  const colorMapSettings = await readGraphviewSettings("colormap");
-  const tags: Tag[] = await index.queryPrefix("tag:");
-  const taggedPages: string[] = [...new Set(tags.map((tag) => tag.page))];
-  const individuallyTaggedPages = await index.queryPrefix("tag:node_color=");
-  const default_color = await readGraphviewSettings("default_color");
-
-  const colors: ColorMap[] = taggedPages.map((page) => {
-    // if individually defined color
-    let color = default_color ? default_color : "000000";
-    if (individuallyTaggedPages.find((t) => t.page === page)) {
-      color = individuallyTaggedPages.find((t) => t.page === page).value.split("=")[1];
-    } else if (colorMapSettings) {
-      // if page is tagged with a tag from colorMapSettings →  map color code to page name
-      // get all tags of page
-      const pageTags = tags.filter((tag) => tag.page === page);
-      // check, if any of the tags is in colorMapSettings
-      const pageTagsInColorMapSettings = pageTags.filter((tag) =>
-        colorMapSettings[tag.value] !== undefined,
-      );
-      // if yes, use color from colorMapSettings
-      if (pageTagsInColorMapSettings.length > 0) {
-        color = colorMapSettings[pageTagsInColorMapSettings[0].value];
-      }
-    }
-    return { "page": page, "color": color };
-  });
-  return colors;
-}
 
 // Build a SpaceGraph object from the current space
 async function buildGraph(name: string): Promise<SpaceGraph> {
-  // Get pages tagged with .graphignore
-  const ignorePages: string[] = (await index.queryPrefix("tag:.graphignore"))
-    .map((tag) => tag.page);
+  const graphignore = new GraphIgnore();
+  await graphignore.init();
 
   // Get all pages in space
   const pages = await space.listPages();
   const nodeNames = pages
-    .filter((page) => !ignorePages.includes(page.name))
+    .filter(graphignore.pagefilter)
     .map(({ name }) => {
       return name;
     });
-
-  // Filter function to remove links to and from pages tagged with .graphignore
-  const filterIgnoredLinks = (link) => {
-    const topage = link.key.split(':')
-      .slice(1, -1)
-      .join(':')
-    return !ignorePages.includes(link.page)
-      && !ignorePages.includes(topage)
-  }
 
   // NOTE: This may result to the same link showing multiple times
   //       if the same page has multiple references to another page.
   const pageLinks = await index.queryPrefix(`pl:`);
   const links = pageLinks
-    .filter(filterIgnoredLinks)
+    .filter(graphignore.linkfilter)
     .map(({ key, page }) => {
       const to = key.split(':')
         .slice(1, -1)
@@ -181,7 +136,7 @@ async function buildGraph(name: string): Promise<SpaceGraph> {
       return { "source": page, "target": to };
     });
 
-  const colors: ColorMap[] = await buildColorMap()
+  const colors: ColorMap[] = await ColorMap.buildColorMap()
 
   const default_color = await readGraphviewSettings("default_color");
 
@@ -197,14 +152,4 @@ async function buildGraph(name: string): Promise<SpaceGraph> {
   return { "nodes": nodes, "links": links };
 }
 
-// use internal navigation via syscall to prevent reloading the full page.
-// From https://github.com/Willyfrog/silverbullet-backlinks
-export async function navigateTo(pageRef: string) {
-  if (pageRef.length === 0) {
-    console.log("no page name supplied, ignoring navigation");
-    return;
-  }
-  const [page, pos] = pageRef.split("@");
-  console.log(`navigating to ${pageRef}`);
-  await editor.navigate(page, +pos); // todo: do we have the position for it?
-}
+

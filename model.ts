@@ -13,8 +13,3 @@ export type Tag = {
   page: string,
   value: string
 }
-
-export type ColorMap = {
-  page: string,
-  color: string
-}

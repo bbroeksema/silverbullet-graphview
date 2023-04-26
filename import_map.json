@@ -3,6 +3,9 @@
     "$sb/": "https://deno.land/x/silverbullet@0.2.13/plug-api/",
     "handlebars": "https://esm.sh/handlebars",
     "yaml": "https://deno.land/std@0.184.0/yaml/mod.ts",
-    "stateProvider": "./stateProvider.ts"
+    "stateprovider": "./stateprovider.ts",
+    "colormap": "./colormap.ts",
+    "utils": "./utils.ts",
+    "graphignore": "./graphignore.ts"
   }
 }

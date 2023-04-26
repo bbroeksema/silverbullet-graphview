@@ -22,6 +22,6 @@ functions:
       - editor:pageLoaded
 
   navigateTo:
-    path: "./graphview.ts:navigateTo"
+    path: "./utils.ts:navigateTo"
     events:
       - graphview:navigateTo
