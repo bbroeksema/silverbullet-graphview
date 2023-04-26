@@ -116,10 +116,11 @@ async function buildColorMap(): Promise<ColorMap[]> {
   const tags: Tag[] = await index.queryPrefix("tag:");
   const taggedPages: string[] = [...new Set(tags.map((tag) => tag.page))];
   const individuallyTaggedPages = await index.queryPrefix("tag:node_color=");
+  const default_color = await readGraphviewSettings("default_color");
 
   const colors: ColorMap[] = taggedPages.map((page) => {
     // if individually defined color
-    let color = "000000";
+    let color = default_color ? default_color : "000000";
     if (individuallyTaggedPages.find((t) => t.page === page)) {
       color = individuallyTaggedPages.find((t) => t.page === page).value.split("=")[1];
     } else if (colorMapSettings) {
@@ -168,7 +169,7 @@ async function buildGraph(name: string): Promise<SpaceGraph> {
 
   const nodes = nodeNames.map((name) => {
     // if page in colors → map color code to page name
-    let color = default_color ? default_color : "#000000";
+    let color = default_color ? default_color : "000000";
     if (colors.find((c) => c.page === name)) {
       color = colors.find((c) => c.page === name).color;
     }
