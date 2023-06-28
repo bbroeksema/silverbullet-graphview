@@ -48,7 +48,7 @@ E.g. `notesarecool/somethingverylong/subsubsubsub/foo` → `notes./somet./subsu.
 ## For offline development
 
 To ease development of the visual part, the offline folder contains a copy of
-the html and custom javascritpt. As well as a simple graph model.
+the html and custom javascript. As well as a simple graph model.
 
 ```bash
 $ cd offline
