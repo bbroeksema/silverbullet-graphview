@@ -3,12 +3,14 @@
 This plug aims to bring similar functionality as the Obsidian Graph view to
 Silver Bullet.
 
+<img src="https://github.com/v411e/silverbullet-graphview/assets/8049779/3cd792dc-41c2-45bf-bc85-6a86c1e1489d" width="50%"/>
+
 ## Installation
 
 Open (`cmd+k`) your `PLUGS` note in SilverBullet and add this plug to the list:
 
 ```yaml
-- github:bbroeksema/silverbullet-graphview/graphview.plug.json
+- github:bbroeksema/silverbullet-graphview/graphview.plug.js
 ```
 
 Then run the `Plugs: Update` command and off you go!
@@ -19,7 +21,7 @@ Run the `Show Global Graph` command to open up the graph view. Zoom and pan is
 supported by scroll and pinch gestures with the mouse(pad).
 
 ### Tags & Paths
-Set tags on the pages to customize their appearance in the graph
+Set **tags** on the pages to customize their appearance in the graph
 - `#node_color=ff0000` → Change node color to red
 - `#.graphignore` → Hide the page from the graph
 
