@@ -123,7 +123,7 @@ async function buildGraph(name: string): Promise<SpaceGraph> {
 
   // NOTE: This may result to the same link showing multiple times
   //       if the same page has multiple references to another page.
-  const pageLinks = await index.queryPrefix(`pl:`);
+  const pageLinks = await index.queryPrefix(`l:`);
   const links = pageLinks
     .filter(graphignore.linkfilter)
     .map(({ key, page }) => {
